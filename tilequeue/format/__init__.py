@@ -2,7 +2,8 @@ from tilequeue.format.geojson import encode_multiple_layers as json_encode_multi
 from tilequeue.format.geojson import encode_single_layer as json_encode_single_layer  # noqa
 from tilequeue.format.mvt import encode as mvt_encode
 from tilequeue.format.topojson import encode as topojson_encode
-from tilequeue.format.pbf import encode as pbf_encode
+from tilequeue.format.pbf import encode_multiple_layers as pbf_encode_multiple_layers  # noqa
+from tilequeue.format.pbf import encode_single_layer as pbf_encode_single_layer  # noqa
 from tilequeue.format.vtm import merge as vtm_encode
 try:
     from coanacatl import encode as coanacatl_encode
@@ -114,8 +115,12 @@ def _make_pbf_layers(feature_layers):
     return pbf_layers
 
 def format_pbf(fp, feature_layers, zoom, bounds_merc, bounds_lnglat, extents):
-    pbf_layers = _make_pbf_layers(feature_layers)
-    pbf_encode(fp, pbf_layers, bounds_merc, extents)
+    if len(feature_layers) == 1:
+        pbf_encode_single_layer(fp, feature_layers[0]['features'], zoom)
+        return
+    else:
+        features_by_layer = convert_feature_layers_to_dict(feature_layers)
+        pbf_encode_multiple_layers(fp, features_by_layer, zoom)
 
 def format_coanacatl(fp, feature_layers, zoom, bounds_merc, bounds_lnglat,
                      extents):
@@ -157,6 +162,7 @@ extension_to_format = dict(
     mvt=mvt_format,
     mvtb=mvtb_format,
     zip=zip_format,
+    pbf=pbf_format,
     # NOTE: this isn't actually the extension of the format; coanacatl writes
     # files ending '.mvt'. this is just to give us something to call this
     # format in config files.
@@ -171,6 +177,7 @@ name_to_format = {
     'MVT Buffered': mvtb_format,
     'ZIP Metatile': zip_format,
     'MVT/Coanacatl': coanacatl_format,
+    'PBF': pbf_format,
 }
 
 

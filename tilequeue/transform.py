@@ -5,6 +5,7 @@ from shapely.wkb import dumps
 from tilequeue.format import json_format
 from tilequeue.format import topojson_format
 from tilequeue.format import vtm_format
+from tilequeue.format import pbf_format
 from tilequeue.tile import bounds_buffer
 from tilequeue.tile import normalize_geometry_type
 import math
@@ -171,6 +172,9 @@ def transform_feature_layers_shape(
     if format in (json_format, topojson_format):
         transform_fn = apply_to_all_coords(mercator_point_to_lnglat)
     elif format == vtm_format:
+        transform_fn = apply_to_all_coords(
+            rescale_point(unpadded_bounds, scale))
+    elif format == pbf_format:
         transform_fn = apply_to_all_coords(
             rescale_point(unpadded_bounds, scale))
     else:
