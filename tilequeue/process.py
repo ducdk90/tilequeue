@@ -376,7 +376,7 @@ def process_coord_no_format(
                 'Missing min_zoom in layer %s' % layer_name
 
             # TODO would be better if 16 wasn't hard coded here
-            if nominal_zoom < 16 and min_zoom >= nominal_zoom + 1:
+            if min_zoom >= nominal_zoom + 1:
                 continue
 
             for k, v in output_props.items():
