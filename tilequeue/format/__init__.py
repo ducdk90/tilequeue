@@ -2,6 +2,7 @@ from tilequeue.format.geojson import encode_multiple_layers as json_encode_multi
 from tilequeue.format.geojson import encode_single_layer as json_encode_single_layer  # noqa
 from tilequeue.format.mvt import encode as mvt_encode
 from tilequeue.format.topojson import encode as topojson_encode
+from tilequeue.format.pbf import encode as pbf_encode
 from tilequeue.format.vtm import merge as vtm_encode
 try:
     from coanacatl import encode as coanacatl_encode
@@ -94,6 +95,27 @@ def format_mvt(fp, feature_layers, zoom, bounds_merc, bounds_lnglat, extents):
 def format_vtm(fp, feature_layers, zoom, bounds_merc, bounds_lnglat):
     vtm_encode(fp, feature_layers)
 
+def _make_pbf_layers(feature_layers):
+    pbf_layers = []
+    for feature_layer in feature_layers:
+        pbf_features = []
+        for shape, props, feature_id in feature_layer['features']:
+            pbf_feature = dict(
+                geometry=shape,
+                properties=props,
+                id=feature_id,
+            )
+            pbf_features.append(pbf_feature)
+        pbf_layer = dict(
+            name=feature_layer['name'],
+            features=pbf_features,
+        )
+        pbf_layers.append(pbf_layer)
+    return pbf_layers
+
+def format_pbf(fp, feature_layers, zoom, bounds_merc, bounds_lnglat, extents):
+    pbf_layers = _make_pbf_layers(feature_layers)
+    pbf_encode(fp, pbf_layers, bounds_merc, extents)
 
 def format_coanacatl(fp, feature_layers, zoom, bounds_merc, bounds_lnglat,
                      extents):
@@ -119,6 +141,10 @@ mvtb_format = OutputFormat('MVT Buffered', 'mvtb', 'application/x-protobuf',
 # package of tiles as a metatile zip
 zip_format = OutputFormat('ZIP Metatile', 'zip', 'application/zip',
                           None, None, None)
+
+pbf_format = OutputFormat('PBF', 'pbf', 'application/x-protobuf',
+                          format_pbf, 4, supports_shapely_geom)
+
 # MVT, but written out by coanacatl/wagyu
 coanacatl_format = OutputFormat('MVT/Coanacatl', 'mvt',
                                 'application/x-protobuf', format_coanacatl,
@@ -131,6 +157,7 @@ extension_to_format = dict(
     mvt=mvt_format,
     mvtb=mvtb_format,
     zip=zip_format,
+    pbf=pbf_format,
     # NOTE: this isn't actually the extension of the format; coanacatl writes
     # files ending '.mvt'. this is just to give us something to call this
     # format in config files.
@@ -145,6 +172,7 @@ name_to_format = {
     'MVT Buffered': mvtb_format,
     'ZIP Metatile': zip_format,
     'MVT/Coanacatl': coanacatl_format,
+    'PBF': pbf_format,
 }
 
 
